@@ -30,6 +30,7 @@ export class vec2 {
   
   public normalize(): number { // 计算单位向量
     let len: number = this.length
+    console.log(this.values)
     if (Math2D.isEquals(len, 0)) {
       this.values[0] = 0
       this.values[1] = 0
@@ -89,6 +90,32 @@ export class vec2 {
     if (result === null) result = new vec2()
     vec2.scale(direction, scalar, result)
     return vec2.sum(start, result, result)
+  }
+
+  public static dotProduct(left: vec2, right: vec2): number { // 向量点乘
+    return left.values[0] * right.values[0] + left.values[1] * right.values[1]
+  }
+
+  public innerProduct(right: vec2): number {
+    return vec2.dotProduct(this, right)
+  }
+
+  public static getAngle(a: vec2, b: vec2, isRadian: boolean = false): number {
+    let dot: number = vec2.dotProduct(a, b)
+    let radian: number = Math.acos(dot / (a.length * b.length))
+    if (isRadian === false) {
+      radian = Math2D.toDegree(radian)
+    }
+    return radian
+  }
+
+  public static getOrientation(from: vec2, to: vec2, isRadian: boolean = false): number {
+    let diff: vec2 = vec2.difference(to, from)
+    let radian = Math.atan2(diff.y, diff.x)
+    if (isRadian === false) {
+      radian = Math2D.toDegree(radian)
+    }
+    return radian
   }
 
   
