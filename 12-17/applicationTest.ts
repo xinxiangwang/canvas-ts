@@ -113,9 +113,15 @@ export class TestApplication extends Canvas2DApplication {
   private _rotationMoon: number = 0 // 月亮自转的角位移
   private _revolution: number = 0 // 月亮围绕太阳公转的角位移
 
+
+  // 坦克
   private _tank: Tank
 
-  
+  // 向量投影
+  public lineStart: vec2 = vec2.create(150, 150)
+  public lineEnd: vec2 = vec2.create(400, 400)
+  public closePt: vec2 = vec2.create()
+  private _hitted: boolean = false
 
   public constructor(canvas: HTMLCanvasElement) {
     super(canvas)
@@ -129,8 +135,125 @@ export class TestApplication extends Canvas2DApplication {
     // this._tank.turretRotation = Math2D.toRadian(-60)
   }
 
-  public drawTank(): void {
+  public drawTank(): void { // 绘制坦克
     this._tank.draw(this)
+  }
+
+  public drawVec(
+    len: number, // 绘制向量长度
+    arrowLen: number = 10, // 向量箭头长度
+    beginText: string = '', // 向量头部信息
+    endText = '', // 向量尾部信息
+    lineWidth: number = 1, // 是否加粗显示向量
+    isLineDash: boolean = false, // 是否虚线显示向量
+    showInfo: boolean = true, // 是否显示向量的长度
+    alpha: boolean = false // 是否已半透明方式显示向量
+    ): void {
+    if (this.context2D === null) return
+
+    if (len < 0) { // 如果是负向量
+      arrowLen = -arrowLen
+    }
+
+    this.context2D.save()
+    this.context2D.lineWidth = lineWidth
+    if (isLineDash) {
+      this.context2D.setLineDash([2, 2])
+    }
+    if (lineWidth > 1) {
+      this.fillCircle(0, 0, 5)
+    } else {
+      this.fillCircle(0, 0, 3)
+    }
+
+    this.context2D.save()
+    if (alpha === true) {
+      this.context2D.strokeStyle = 'rgba(0, 0, 0, 0.3)'
+    }
+    this.strokeLine(0, 0, len, 0)
+
+    this.context2D.save()
+    this.strokeLine(len, 0, len - arrowLen, arrowLen)
+
+    this.context2D.restore()
+    this.strokeLine(len, 0, len - arrowLen, -arrowLen)
+
+    this.context2D.restore()
+    this.context2D.restore()
+
+    let font: FontType = '15px sans-serif'
+
+    if (beginText !== undefined && beginText.length !== 0) {
+      if (len > 0) {
+        this.fillText(beginText, 0, 0, 'black', 'right', 'bottom', font)
+      } else {
+        this.fillText(beginText, 0, 0, 'black', 'left', 'bottom', font)
+      }
+    }
+
+    len = parseFloat(len.toFixed(2))
+
+    if (endText !== undefined && endText.length !== 0) {
+      if (len > 0) {
+        this.fillText(endText, len, 0, 'black', 'left', 'bottom', font)
+      } else {
+        this.fillText(endText, len, 0, 'black', 'right', 'bottom', font)
+      }
+    }
+
+    if (showInfo === true) {
+      this.fillText(Math.abs(len).toString(), len * 0.5, 0, 'black', 'center', 'bottom', font)
+    }
+    this.context2D.restore()
+  }
+
+  public drawVecFromLine(
+    start: vec2,
+    end: vec2,
+    arrowLen: number = 10,
+    beginText: string = '',
+    endText: string = '',
+    lineWidth: number = 1,
+    isLineDash: boolean = false,
+    showInfo: boolean = false,
+    alpha: boolean = false
+  ): number {
+    let angle: number = vec2.getOrientation(start, end, true)
+
+    if (this.context2D !== null) {
+      let diff: vec2 = vec2.difference(end, start)
+      let len: number = diff.length
+      this.context2D.save()
+      this.context2D.translate(start.x, start.y)
+      this.context2D.rotate(angle)
+      this.drawVec(len, arrowLen, beginText, endText, lineWidth, isLineDash, showInfo, alpha)
+      this.context2D.restore()
+    }
+    return angle
+  }
+
+  public drawMouseLineProjection(): void {
+    if (this.context2D !== null) {
+      if (this._hitted === false) {
+        this.drawVecFromLine(this.lineStart, this.lineEnd, 10, this.lineStart.toString(), this.lineEnd.toString(), 1, false, true)
+      } else {
+        let angle: number = 0
+        let mousePt: vec2 = vec2.create(this._mouseX, this._mouseY)
+        this.context2D.save()
+        angle = this.drawVecFromLine(this.lineStart, this.lineEnd, 10, this.lineStart.toString(), this.lineEnd.toString(), 3, false, true)
+        this.fillCircle(this.closePt.x, this.closePt.y, 5)
+        this.drawVecFromLine(this.lineStart, mousePt, 10, '', '', 1, true, true, false)
+        this.drawVecFromLine(mousePt, this.closePt, 10, '', '', 1, true, true, false)
+        this.context2D.restore()
+        this.context2D.save()
+        this.context2D.translate(this.closePt.x, this.closePt.y)
+        this.context2D.rotate(angle)
+        this.drawCoordInfo(`[${this.closePt.x.toFixed(2)},${this.closePt.y.toFixed(2)}]`, 0, 0)
+        this.context2D.restore()
+        angle = vec2.getAngle(vec2.difference(this.lineEnd, this.lineStart), vec2.difference(mousePt, this.lineStart), false)
+        this.drawCoordInfo(angle.toFixed(2), this.lineStart.x + 10, this.lineStart.y + 10)
+      }
+    }
   }
 
   public static Colors: Array<string> = [
@@ -846,6 +969,7 @@ export class TestApplication extends Canvas2DApplication {
     this._mouseX = e.canvasPosition.x
     this._mouseY = e.canvasPosition.y
     this._tank.onMouseMove(e)
+    this._hitted = Math2D.projectPointOnlineSegment(vec2.create(e.canvasPosition.x, e.canvasPosition.y), this.lineStart, this.lineEnd, this.closePt)
   }
 
   protected dispatchKeyPress(e: CanvasKeyBoardEvent): void {
@@ -1125,9 +1249,9 @@ export class TestApplication extends Canvas2DApplication {
   public render(): void {
     if (this.context2D !== null) {
       this.context2D.clearRect(0, 0, this.canvas.width, this.canvas.height)
-      this.strokeGrid()
-      this.drawCanvasCoordCenter()
-      this.draw4Quadrant()
+      this.strokeGrid() // 绘制单元格
+      this.drawCanvasCoordCenter() // 绘制中心坐标轴
+      this.draw4Quadrant() // 绘制象限
 
       // this.doTransform(0)
       // this.doTransform(20)
@@ -1137,9 +1261,10 @@ export class TestApplication extends Canvas2DApplication {
       // this.doLocalTransfrom()
       // this.testFillLocalRectWidthTitleUV()
       // this.rotationAndRevolutionSimulation()
-      this.drawTank()
+      // this.drawTank()
 
-      this.drawCoordInfo(`[${this._mouseX}, ${this._mouseY}, ${this._tank.tankRotation.toFixed(2)}]`, this._mouseX, this._mouseY)
+      // this.drawCoordInfo(`[${this._mouseX}, ${this._mouseY}, ${this._tank.tankRotation.toFixed(2)}]`, this._mouseX, this._mouseY)
+      this.drawMouseLineProjection()
     }
   }
   

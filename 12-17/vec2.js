@@ -40,6 +40,7 @@ var vec2 = /** @class */ (function () {
     });
     vec2.prototype.normalize = function () {
         var len = this.length;
+        console.log(this.values);
         if (Math2D.isEquals(len, 0)) {
             this.values[0] = 0;
             this.values[1] = 0;
@@ -95,6 +96,30 @@ var vec2 = /** @class */ (function () {
             result = new vec2();
         vec2.scale(direction, scalar, result);
         return vec2.sum(start, result, result);
+    };
+    vec2.dotProduct = function (left, right) {
+        return left.values[0] * right.values[0] + left.values[1] * right.values[1];
+    };
+    vec2.prototype.innerProduct = function (right) {
+        return vec2.dotProduct(this, right);
+    };
+    vec2.getAngle = function (a, b, isRadian) {
+        if (isRadian === void 0) { isRadian = false; }
+        var dot = vec2.dotProduct(a, b);
+        var radian = Math.acos(dot / (a.length * b.length));
+        if (isRadian === false) {
+            radian = Math2D.toDegree(radian);
+        }
+        return radian;
+    };
+    vec2.getOrientation = function (from, to, isRadian) {
+        if (isRadian === void 0) { isRadian = false; }
+        var diff = vec2.difference(to, from);
+        var radian = Math.atan2(diff.y, diff.x);
+        if (isRadian === false) {
+            radian = Math2D.toDegree(radian);
+        }
+        return radian;
     };
     Object.defineProperty(vec2.prototype, "x", {
         get: function () { return this.values[0]; },
@@ -172,6 +197,29 @@ var Math2D = /** @class */ (function () {
     };
     Math2D.toRadian = function (degree) {
         return degree * PiBy180;
+    };
+    Math2D.projectPointOnlineSegment = function (pt, start, end, closePoint) {
+        var v0 = vec2.create();
+        var v1 = vec2.create();
+        var d = 0;
+        vec2.difference(pt, start, v0);
+        vec2.difference(end, start, v1);
+        d = v1.normalize();
+        var t = vec2.dotProduct(v0, v1);
+        if (t < 0) {
+            closePoint.x = start.x;
+            closePoint.y = start.y;
+            return false;
+        }
+        else if (t > d) {
+            closePoint.x = end.x;
+            closePoint.y = end.y;
+            return false;
+        }
+        else {
+            vec2.scaleAdd(start, v1, t, closePoint);
+        }
+        return true;
     };
     return Math2D;
 }());

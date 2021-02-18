@@ -118,8 +118,6 @@ export class vec2 {
     return radian
   }
 
-  
-
   public get x(): number { return this.values[0] }
   public set x(x: number) { this.values[0] = x }
   public get y(): number { return this.values[1] }
@@ -167,6 +165,27 @@ export class Math2D {
   }
   public static toRadian(degree: number): number {
     return degree * PiBy180
+  }
+  public static projectPointOnlineSegment(pt: vec2, start: vec2, end: vec2, closePoint: vec2): boolean {
+    let v0: vec2 = vec2.create()
+    let v1: vec2 = vec2.create()
+    let d: number = 0
+    vec2.difference(pt, start, v0)
+    vec2.difference(end, start, v1)
+    d = v1.normalize()
+    let t: number = vec2.dotProduct(v0, v1)
+    if (t < 0) {
+      closePoint.x = start.x
+      closePoint.y = start.y
+      return false
+    } else if (t > d) {
+      closePoint.x = end.x
+      closePoint.y = end.y
+      return false
+    } else {
+      vec2.scaleAdd(start, v1, t, closePoint)
+    }
+    return true
   }
 }
 

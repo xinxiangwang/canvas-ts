@@ -29,7 +29,7 @@ var Tank = /** @class */ (function () {
         this.pos = new vec2(100, 100);
         this.target = new vec2();
     }
-    // private _moveTowardTo(intervalSec: number): void {
+    // private _moveTowardTo(intervalSec: number): void { // 三角函数移动
     //   const diffX: number = this.targetX - this.x
     //   const diffY: number = this.targetY - this.y
     //   const currSpeed: number = this.linearSpeed * intervalSec
@@ -44,12 +44,12 @@ var Tank = /** @class */ (function () {
     // }
     Tank.prototype._moveTowardTo = function (intervalSec) {
         var dir = vec2.difference(this.target, this.pos); // 目标点减去当前位置 得到向量dir
-        console.log(this.pos, this.target);
-        console.log(JSON.stringify(dir.values));
+        // console.log(this.pos, this.target)
+        // console.log(JSON.stringify(dir.values))
         dir.normalize(); // 获取dir单位向量(方向)
-        console.log(JSON.stringify(dir.values), JSON.stringify(this.pos.values), this.linearSpeed * intervalSec);
+        // console.log(JSON.stringify(dir.values), JSON.stringify(this.pos.values), this.linearSpeed * intervalSec)
         this.pos = vec2.scaleAdd(this.pos, dir, this.linearSpeed * intervalSec);
-        console.log('12312312312312333333333333333333333');
+        // console.log('12312312312312333333333333333333333')
         this.x = this.pos.x;
         this.y = this.pos.y;
     };
